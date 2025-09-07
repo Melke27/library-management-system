@@ -20,7 +20,7 @@ class Author {
       
       const [result] = await promisePool.execute(
         'INSERT INTO authors (first_name, last_name, email, birth_date, nationality, bio) VALUES (?, ?, ?, ?, ?, ?)',
-        [first_name, last_name, email, birth_date, nationality, bio]
+        [first_name, last_name, email || null, birth_date || null, nationality || null, bio || null]
       );
       
       return await this.findById(result.insertId);
@@ -32,9 +32,13 @@ class Author {
   // Find all authors
   static async findAll(limit = 50, offset = 0) {
     try {
-      const [rows] = await promisePool.execute(
-        'SELECT * FROM authors ORDER BY created_at DESC LIMIT ? OFFSET ?',
-        [limit, offset]
+      // Ensure parameters are numbers and validate them
+      const limitNum = Math.max(1, Math.min(parseInt(limit, 10) || 50, 1000));
+      const offsetNum = Math.max(0, parseInt(offset, 10) || 0);
+      
+      // Use query instead of execute for compatibility
+      const [rows] = await promisePool.query(
+        `SELECT * FROM authors ORDER BY created_at DESC LIMIT ${limitNum} OFFSET ${offsetNum}`
       );
       
       return rows.map(row => new Author(row));
@@ -84,7 +88,7 @@ class Author {
       Object.keys(updateData).forEach(key => {
         if (updateData[key] !== undefined) {
           fields.push(`${key} = ?`);
-          values.push(updateData[key]);
+          values.push(updateData[key] === '' ? null : updateData[key]);
         }
       });
       
@@ -137,9 +141,11 @@ class Author {
   static async search(searchTerm, limit = 20) {
     try {
       const searchPattern = `%${searchTerm}%`;
+      const limitNum = Math.max(1, Math.min(parseInt(limit, 10) || 20, 1000));
+      
       const [rows] = await promisePool.execute(
         'SELECT * FROM authors WHERE first_name LIKE ? OR last_name LIKE ? OR email LIKE ? ORDER BY created_at DESC LIMIT ?',
-        [searchPattern, searchPattern, searchPattern, limit]
+        [searchPattern, searchPattern, searchPattern, limitNum]
       );
       
       return rows.map(row => new Author(row));

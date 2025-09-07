@@ -10,7 +10,10 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME || 'library_management',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  acquireTimeout: 60000,
+  timeout: 60000,
+  reconnect: true
 });
 
 // Get promise-based pool

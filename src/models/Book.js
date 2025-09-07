@@ -34,7 +34,7 @@ class Book {
       
       const [result] = await promisePool.execute(
         'INSERT INTO books (title, isbn, author_id, genre, publication_date, pages, price, description, stock_quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [title, isbn, author_id, genre, publication_date, pages, price, description, stock_quantity || 0]
+        [title, isbn, author_id, genre || null, publication_date || null, pages || null, price || null, description || null, stock_quantity || 0]
       );
       
       return await this.findById(result.insertId);
@@ -46,6 +46,9 @@ class Book {
   // Find all books
   static async findAll(limit = 50, offset = 0) {
     try {
+      const limitNum = Number(limit);
+      const offsetNum = Number(offset);
+      
       const [rows] = await promisePool.execute(
         `SELECT 
           b.*,
@@ -57,7 +60,7 @@ class Book {
          LEFT JOIN authors a ON b.author_id = a.id 
          ORDER BY b.created_at DESC 
          LIMIT ? OFFSET ?`,
-        [limit, offset]
+        [limitNum, offsetNum]
       );
       
       return rows.map(row => new Book(row));
@@ -123,7 +126,7 @@ class Book {
       Object.keys(updateData).forEach(key => {
         if (updateData[key] !== undefined) {
           fields.push(`${key} = ?`);
-          values.push(updateData[key]);
+          values.push(updateData[key] === '' ? null : updateData[key]);
         }
       });
       

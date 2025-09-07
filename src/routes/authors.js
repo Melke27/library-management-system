@@ -7,11 +7,16 @@ const router = express.Router();
 // GET /api/v1/authors - Get all authors (with optional search and pagination)
 router.get('/', AuthorController.getAllAuthors);
 
+// Simple test endpoint (must come before parameterized routes)
+router.get('/test', (req, res) => {
+  res.json({ success: true, message: 'Authors route working' });
+});
+
+// GET /api/v1/authors/:id/books - Get books by author (must come before generic :id route)
+router.get('/:id/books', paramValidation.id, AuthorController.getAuthorBooks);
+
 // GET /api/v1/authors/:id - Get author by ID
 router.get('/:id', paramValidation.id, AuthorController.getAuthorById);
-
-// GET /api/v1/authors/:id/books - Get books by author
-router.get('/:id/books', paramValidation.id, AuthorController.getAuthorBooks);
 
 // POST /api/v1/authors - Create new author
 router.post('/', authorValidation.create, AuthorController.createAuthor);
